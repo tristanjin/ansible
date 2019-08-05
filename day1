@@ -1,0 +1,179 @@
+
+[student@workstation ~]$ ansible all --list-hosts
+  hosts (3):
+    test1
+    test2
+    test3
+[student@workstation ~]$ 
+
+
+[student@workstation ~]$ ansible all --list-hosts
+  hosts (3):
+    test1
+    test2
+    test3
+[student@workstation ~]$ 
+
+
+
+
+[student@workstation ~]$ ansible db --list-hosts
+  hosts (2):
+    test3
+    test4
+[student@workstation ~]$ 
+
+
+
+
+[web]
+test1
+test2
+
+[db]
+test3
+test4
+
+[test:children]
+web
+db
+
+[student@workstation test]$ ansible localhost -a id -u devops 
+localhost | CHANGED | rc=0 >>
+uid=1000(student) gid=1000(student) groups=1000(student),10(wheel) context=unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
+
+
+
+[student@workstation test]$ ansible all -m ping
+SUDO password: 
+localhost | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+servera.lab.example.com | SUCCESS => {
+    "changed": false, 
+    "ping": "pong"
+}
+[student@workstation test]$ cat inventory 
+localhost
+
+[myself]
+localhost
+
+[intranetweb]
+servera.lab.example.com
+
+=======================================================================================
+
+[student@workstation deploy-review]$ cat inventory/inventory 
+[internetweb]
+serverb.lab.example.com
+
+[intranetweb]
+servera.lab.example.com
+serverc.lab.example.com
+serverd.lab.example.com
+
+
+[student@workstation deploy-review]$ ansible all -m copy -a 'content="This server is managed by Ansible\n" dest=/etc/motd' --become
+serverb.lab.example.com | SUCCESS => {
+    "changed": false, 
+    "checksum": "a9a12d8e9b9fadf76bbba83ea5c0f0a07a7cba0b", 
+    "dest": "/etc/motd", 
+    "gid": 0, 
+    "group": "root", 
+    "mode": "0644", 
+    "owner": "root", 
+    "path": "/etc/motd", 
+    "secontext": "system_u:object_r:etc_t:s0", 
+    "size": 34, 
+    "state": "file", 
+    "uid": 0
+}
+serverd.lab.example.com | SUCCESS => {
+    "changed": false, 
+    "checksum": "a9a12d8e9b9fadf76bbba83ea5c0f0a07a7cba0b", 
+    "dest": "/etc/motd", 
+    "gid": 0, 
+    "group": "root", 
+    "mode": "0644", 
+    "owner": "root", 
+    "path": "/etc/motd", 
+    "secontext": "system_u:object_r:etc_t:s0", 
+    "size": 34, 
+    "state": "file", 
+    "uid": 0
+}
+serverc.lab.example.com | SUCCESS => {
+    "changed": false, 
+    "checksum": "a9a12d8e9b9fadf76bbba83ea5c0f0a07a7cba0b", 
+    "dest": "/etc/motd", 
+    "gid": 0, 
+    "group": "root", 
+    "mode": "0644", 
+    "owner": "root", 
+    "path": "/etc/motd", 
+    "secontext": "system_u:object_r:etc_t:s0", 
+    "size": 34, 
+    "state": "file", 
+    "uid": 0
+}
+servera.lab.example.com | CHANGED => {
+    "changed": true, 
+    "checksum": "a9a12d8e9b9fadf76bbba83ea5c0f0a07a7cba0b", 
+    "dest": "/etc/motd", 
+    "gid": 0, 
+    "group": "root", 
+    "md5sum": "613249efde71d7319323f403f695c4c2", 
+    "mode": "0644", 
+    "owner": "root", 
+    "secontext": "system_u:object_r:etc_t:s0", 
+    "size": 34, 
+    "src": "/home/devops/.ansible/tmp/ansible-tmp-1564986926.04-54880456772886/source", 
+    "state": "file", 
+    "uid": 0
+}
+[student@workstation deploy-review]$ ansible all -m command -a 'cat /etc/motd' -o
+serverb.lab.example.com | CHANGED | rc=0 | (stdout) This server is managed by Ansible
+serverd.lab.example.com | CHANGED | rc=0 | (stdout) This server is managed by Ansible
+serverc.lab.example.com | CHANGED | rc=0 | (stdout) This server is managed by Ansible
+servera.lab.example.com | CHANGED | rc=0 | (stdout) This server is managed by Ansible
+
+
+
+
+
+
+[student@workstation playdemo]$ cat example.yml
+- name: just an example
+  hosts: serverb.lab.example.com
+  remote_user: devops
+  become: true
+  tasks:
+   - name: web server is enabled
+     service:
+       name: httpd
+       enabled: true
+
+   - name: NTP server is enabled
+     service:
+        name: chronyd
+        enabled: true
+
+
+
+[student@workstation playdemo]$ ansible-playbook example.yml
+
+PLAY [just an example] ********************************************************************************************************************************************
+
+TASK [Gathering Facts] ********************************************************************************************************************************************
+ok: [serverb.lab.example.com]
+
+TASK [web server is enabled] **************************************************************************************************************************************
+ok: [serverb.lab.example.com]
+
+TASK [NTP server is enabled] **************************************************************************************************************************************
+ok: [serverb.lab.example.com]
+
+PLAY RECAP ********************************************************************************************************************************************************
+serverb.lab.example.com    : ok=3    changed=0    unreachable=0    failed=0 
